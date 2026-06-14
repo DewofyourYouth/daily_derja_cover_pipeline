@@ -10,6 +10,7 @@ from .templates import (compose_on_template, title_only_on_template,
 from .photo_fit import load_photo, fit_to_window, detect_face_box, focus_point
 from .prompts import build_prompt
 from .imagegen import generate_scene
+from .cutout import prepare_mnemonic, cutout_figure, trim_border
 
 __all__ = [
     "Register", "Layout", "LAYOUT", "REGISTERS", "get_register",
@@ -20,4 +21,5 @@ __all__ = [
     "REGISTRY", "TEMPLATES_DIR",
     "load_photo", "fit_to_window", "detect_face_box", "focus_point",
     "build_prompt", "generate_scene",
+    "prepare_mnemonic", "cutout_figure", "trim_border",
 ]

@@ -27,6 +27,8 @@ the dialect of the post, not the geography of its events.**
 | `levantine_damascus_tile` | Levantine (Shami) | geometric wood-inlay, mashrabiya, Liwan arch |
 | `maghrebi_zellige` | Tunisian (Maghrebi) | Sidi Bou Saïd cobalt stars, whitewash, saffron |
 | `maghrebi_bougainvillea` | Tunisian (Maghrebi) | cascading bougainvillea, cobalt zellige |
+| `levantine_word_square` | Levantine — Word series | 1:1 image well + word & `نسمة كلمة` cartouches (gold) |
+| `maghrebi_word_sbs` | Tunisian — Word series | Sidi Bou Saïd: top-oval `نسمة كلمة`, square well, word box, logo medallion |
 
 `python cover.py templates` lists them.
 
@@ -64,9 +66,37 @@ python cover.py prompt --prompt "a man at a desk before dawn, one lamp lit" \
 python cover.py prompt --art examples/base_levantine_minttea.jpg --title "شويّة هدوء" \
     --template maghrebi_zellige --out calm.png
 
+# WORD SERIES (نسمة كلمة) — word + a mnemonic graphic on a dedicated word frame
+python cover.py word --word "كفاية" --prompt "a woman draped in too many keffiyehs, exasperated" \
+    --template levantine_word_square --out kafiya.png
+python cover.py word --word "كفاية" --art mnemonic.png --template maghrebi_word_sbs --out kafiya_sbs.png
+
 # TITLE — restamp just the title on an existing cover
 python cover.py title --base covers/calm.png --title "هدوء" --template maghrebi_zellige --out calm2.png
 ```
+
+### Word series (نسمة كلمة)
+
+The Word series teaches one Arabic word with a **mnemonic graphic**. Two dedicated 16:9
+frames carry the series — `نسمة كلمة` and `dailyderja.com` are baked into each frame, and
+each has a square **image well** plus a **word** cartouche:
+
+- `levantine_word_square` — gold + pomegranate; word cartouche left, square well right.
+- `maghrebi_word_sbs` — Sidi Bou Saïd cobalt/whitewash; square well left, word box right,
+  logo medallion lower-right (matches the Word-Breeze layout).
+
+```bash
+python cover.py word --word "كفاية" --prompt "a woman in too many keffiyehs, exasperated"   # generate the mnemonic
+python cover.py word --word "كفاية" --art mnemonic.png      # supply the mnemonic graphic
+python cover.py word --word "كفاية" --photo photos/photo_05.jpg
+```
+
+The mnemonic graphic is **background-cut automatically** (`brand/cutout.py`): the border ring
+and the flat background are keyed out (edge-connected only, so a keffiyeh's white survives;
+any teal is removed globally) and the figure is composited onto the frame's cream well — no
+illustration block, no border. Pass `--no-cutout` to drop a full-bleed scene into the well
+instead. `--word` also works on any general template (renders a `نسمة كلمة` kicker + word
+overlaid in the title area).
 
 Output is written to `covers/`. `--register levantine|maghrebi` overrides the generation
 register in prompt mode (defaults to the template's register). `--title-color "r,g,b"`
@@ -109,15 +139,16 @@ baked logo + URL), the library stays consistent.
 ## Files
 
 ```
-cover.py                    # CLI: photo | prompt | title | templates
+cover.py                    # CLI: photo | prompt | title | word | templates
 daily_derja_cover.py        # no-API helper: overlay-title, recolor-logo
 brand/
   registers.py              # Levantine + Maghrebi palettes, layout, prompt fragments
-  templates.py              # template registry + compose_on_template
-  frame.py                  # paper, tile motifs, logo, Amiri/raqm title + footer
+  templates.py              # template registry + compose_on_template (RGBA-aware)
+  frame.py                  # logo, tile motifs, Amiri/raqm title + footer + kicker
   photo_fit.py              # face-aware crop to the window
   prompts.py                # register-aware Daily Derja prompt builder
   imagegen.py               # Gemini (default) + OpenAI backends
+  cutout.py                 # mnemonic figure cutout: trim border + background→transparent
 templates/                  # the frames: <name>.jpg (baked) + <name>_blank.jpg + templates.json
 assets/logo/                # the Daily Derja logo (transparent line-art)
 fonts/Amiri-Regular.ttf     # bundled (auto-downloads if missing)

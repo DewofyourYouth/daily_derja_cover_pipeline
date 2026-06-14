@@ -46,5 +46,23 @@
     "canvas": [2752, 1536],
     "window": [420, 413, 2331, 1104],
     "title": {"top_f": 0.15, "max_w_f": 0.86, "max_h_f": 0.26, "size_f": 0.115, "color": [38, 70, 135]}
+  },
+  "levantine_word_square": {
+    "file": "levantine_word_square.jpg",
+    "label": "Levantine Word Series — 16:9 cover, 1:1 image well + word/نسمة كلمة cartouches (نسمة كلمة + URL baked)",
+    "register": "levantine",
+    "canvas": [2752, 1536],
+    "window": [1354, 295, 2205, 1198],
+    "word_panel": [627, 712, 1105, 1175],
+    "title": {"size_f": 0.17, "max_w_f": 0.84, "max_h_f": 0.80, "color": [140, 35, 38]}
+  },
+  "maghrebi_word_sbs": {
+    "file": "maghrebi_word_sbs.jpg",
+    "label": "Maghrebi Word Series (Sidi Bou Saïd) — top oval نسمة كلمة, square well left, word box right, baked logo + URL",
+    "register": "maghrebi",
+    "canvas": [2752, 1536],
+    "window": [490, 501, 1018, 1030],
+    "word_panel": [1690, 512, 2262, 704],
+    "title": {"size_f": 0.12, "max_w_f": 0.88, "max_h_f": 0.82, "color": [38, 70, 135]}
   }
 }

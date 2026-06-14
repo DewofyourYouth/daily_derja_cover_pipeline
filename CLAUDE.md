@@ -37,6 +37,22 @@ vowel-marked titles aren't penalised. A feathered cream scrim is laid behind the
 only when the pixels under it would hurt legibility (`_legible`), never a hard plate.
 Title colour comes from the template's `title.color`; sepia is the fallback constant.
 
+## Word series (نسمة كلمة) + cutout
+
+The Word series ("Word Breeze") teaches one word with a **mnemonic graphic**. Its two
+16:9 frames — `levantine_word_square` (gold) and `maghrebi_word_sbs` (Sidi Bou Saïd) — bake
+`نسمة كلمة` + `dailyderja.com` (and, on the SBS frame, the logo medallion) into the frame,
+and declare BOTH a square `window` (the image well) and a `word_panel` (where the per-post
+word renders). When a template has `word_panel`, `compose_on_template` renders the word there
+and does NOT draw a kicker (the series name is baked).
+
+`cover.py word` supplies the mnemonic via `--prompt` (generated), `--art`, or `--photo`, then
+`brand/cutout.prepare_mnemonic` **trims any border ring and keys the background transparent**
+(flood-fill from the edges so interior whites survive; teal removed globally) so the figure
+composites onto the cream well with no block/border. RGBA content is contain-fit + bottom-
+aligned by `compose_on_template`; opaque content cover-fits. `--no-cutout` keeps a full scene.
+(`--word` on a *general* template instead overlays a `نسمة كلمة` kicker + word in the title band.)
+
 ## Adding / re-baking templates
 
 - New frame: paint/generate an ornate border on 2752×1536 cream with a blank centre

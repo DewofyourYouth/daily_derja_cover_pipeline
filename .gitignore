@@ -14,7 +14,10 @@ covers/*
 
 # Debug / contact sheets (any file beginning with underscore)
 _*.png
+_*.jpg
+_*.jpeg
 **/_*.png
+**/_*.jpg
 
 # OS
 .DS_Store

@@ -60,33 +60,68 @@ def _title_geom(spec: dict):
 
 def compose_on_template(content: Image.Image, name: str, title: str = "",
                         title_color: Optional[Tuple[int, int, int]] = None,
-                        keyline: bool = True) -> Tuple[Image.Image, int]:
+                        keyline: bool = True, kicker: Optional[str] = None) -> Tuple[Image.Image, int]:
     """Drop `content` into the template's window and overlay the title. The border,
-    logo and URL come from the baked frame asset."""
+    logo and URL come from the baked frame asset.
+
+    `kicker` (e.g. 'نسمة كلمة') switches on the word-series layout: a small series line
+    above the large word, given extra vertical room in the window."""
     spec = get_template(name)
     frame = Image.open(os.path.join(TEMPLATES_DIR, spec["file"])).convert("RGBA")
     l, t, r, b = spec["window"]
     ww, wh = r - l, b - t
     base = frame.copy()
-    base.paste(cover_fit(content, ww, wh).convert("RGB"), (l, t))
-    if keyline:                                   # crisp the content/border seam
-        ImageDraw.Draw(base).rectangle([l, t, r - 1, b - 1], outline=GOLD_KEYLINE, width=3)
-    cx, cy, max_w, max_h, ts = _title_geom(spec)
+    if content is not None:                       # leave the frame's cream window if no content
+        if content.mode == "RGBA" and content.getextrema()[3][0] < 250:
+            # transparent figure cutout — contain-fit, bottom-align, composite onto the cream window
+            cw, ch = content.size
+            s = min(ww / cw, wh / ch) * 0.97
+            fig = content.resize((max(1, int(cw * s)), max(1, int(ch * s))), Image.LANCZOS)
+            px = l + (ww - fig.width) // 2
+            py = t + (wh - fig.height) - int(wh * 0.02)
+            base.alpha_composite(fig, (px, py))
+        else:                                     # opaque content fills the window
+            base.paste(cover_fit(content, ww, wh).convert("RGB"), (l, t))
+            if keyline:                           # crisp the content/border seam
+                ImageDraw.Draw(base).rectangle([l, t, r - 1, b - 1], outline=GOLD_KEYLINE, width=3)
     H = base.size[1]
-    target = int(ts.get("size_f", 0.115) * H)
+    ts = spec["title"]
     color = title_color or tuple(ts["color"])
-    base, size = draw_title_at(base, title, cx, cy, max_w, max_h, color=color, target_size=target)
+
+    word_panel = spec.get("word_panel")
+    if word_panel:                                # dedicated word-series frame: series header is
+        wl, wt, wr, wb = word_panel               # baked in; render the WORD large, no kicker
+        target = int(ts.get("size_f", 0.20) * H)
+        base, size = draw_title_at(
+            base, title, (wl + wr) // 2, (wt + wb) // 2,
+            int((wr - wl) * ts.get("max_w_f", 0.84)), int((wb - wt) * ts.get("max_h_f", 0.74)),
+            color=color, target_size=target)
+        return base.convert("RGB"), size
+
+    cx, cy, max_w, max_h, _ = _title_geom(spec)
+    if kicker:                                     # word series on a general template: kicker + word
+        cy = int(t + 0.25 * wh)
+        max_h = int(0.50 * wh)
+    target = int(ts.get("size_f", 0.115) * H)
+    base, size = draw_title_at(base, title, cx, cy, max_w, max_h, color=color,
+                               target_size=target, kicker=kicker, kicker_color=color)
     return base.convert("RGB"), size
 
 
 def title_only_on_template(base_img: Image.Image, name: str, title: str,
-                           title_color: Optional[Tuple[int, int, int]] = None) -> Tuple[Image.Image, int]:
+                           title_color: Optional[Tuple[int, int, int]] = None,
+                           kicker: Optional[str] = None) -> Tuple[Image.Image, int]:
     """Re-stamp just the title on an existing cover built from `name` (fix a typo
-    without re-dropping content)."""
+    without re-dropping content). `kicker` enables the word-series layout."""
     spec = get_template(name)
     cx, cy, max_w, max_h, ts = _title_geom(spec)
+    if kicker:
+        l, t, r, b = spec["window"]
+        wh = b - t
+        cy = int(t + 0.25 * wh)
+        max_h = int(0.50 * wh)
     H = base_img.size[1]
     target = int(ts.get("size_f", 0.115) * H)
     color = title_color or tuple(ts["color"])
     return draw_title_at(base_img.convert("RGBA"), title, cx, cy, max_w, max_h,
-                         color=color, target_size=target)
+                         color=color, target_size=target, kicker=kicker, kicker_color=color)

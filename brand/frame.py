@@ -36,7 +36,8 @@ AMIRI_URL = "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Regular.tt
 DEFAULT_LOGO = os.path.join(HERE, "assets", "logo", "daily_derja_logo.png")
 CREAM = (249, 245, 236)
 
-_TASHKEEL = re.compile(r"[ؐ-ًؚ-ٰٟۖ-ۭـ]")  # Arabic marks + tatweel
+# Arabic diacritics / marks + tatweel ONLY (must NOT include the letter block 0620–064A).
+_TASHKEEL = re.compile("[ؐ-ؚـً-ٰٟۖ-ۜ۟-۪ۨ-ۭ]")
 
 
 # --------------------------------------------------------------------- fonts
@@ -199,24 +200,60 @@ def draw_title(canvas: Image.Image, reg: Register, title: str, lay: Layout = LAY
 
 def draw_title_at(canvas: Image.Image, title: str, cx: int, cy: int, max_w: int, max_h: int,
                   color: Tuple[int, int, int] = TITLE_COLOR, target_size: Optional[int] = None,
+                  kicker: Optional[str] = None, kicker_color: Optional[Tuple[int, int, int]] = None,
                   lay: Layout = LAYOUT) -> Tuple[Image.Image, int]:
     """Overlay an Arabic title centred at (cx, cy), fit within (max_w, max_h); cream
-    scrim safety net if the area isn't legible. Used by the template compositor."""
+    scrim safety net if the area isn't legible.
+
+    If `kicker` is given (e.g. a series name like 'نسمة كلمة'), it is rendered small
+    ABOVE the main word — the Daily Derja "word series" layout (series kicker + word)."""
     if not title:
         return canvas, 0
     ensure_font()
     W, H = canvas.size
     bare = _TASHKEEL.sub("", title) or title
-    fit = _fit_title_size(bare, max_w, max_h)
-    size = min(target_size, fit) if target_size else fit
+
+    if not kicker:
+        fit = _fit_title_size(bare, max_w, max_h)
+        size = min(target_size, fit) if target_size else fit
+        d = ImageDraw.Draw(canvas)
+        bb = d.textbbox((cx, cy), title, font=_amiri(size), anchor="mm", direction="rtl", language="ar")
+        padx, pady = int(0.026 * W), int(0.020 * H)
+        box = (bb[0] - padx, bb[1] - pady, bb[2] + padx, bb[3] + pady)
+        if not _legible(canvas, box, lay):
+            canvas = _scrim(canvas, box, W).convert("RGBA")
+            d = ImageDraw.Draw(canvas)
+        d.text((cx, cy), title, font=_amiri(size), fill=color, anchor="mm", direction="rtl", language="ar")
+        return canvas, size
+
+    # --- word-series layout: small kicker line + large word, stacked & centred on cy ---
+    word_fit = _fit_title_size(bare, max_w, int(max_h * 0.62))
+    size = min(target_size, word_fit) if target_size else word_fit
+    kbare = _TASHKEEL.sub("", kicker) or kicker
+    ksize = max(26, int(size * 0.46))
+    while ksize > 22:
+        kb = _fit_title_size(kbare, int(max_w * 0.9), int(size * 0.6))
+        ksize = min(ksize, kb); break
     d = ImageDraw.Draw(canvas)
-    bb = d.textbbox((cx, cy), title, font=_amiri(size), anchor="mm", direction="rtl", language="ar")
-    padx, pady = int(0.026 * W), int(0.020 * H)
-    box = (bb[0] - padx, bb[1] - pady, bb[2] + padx, bb[3] + pady)
+    wbb = d.textbbox((cx, cy), title, font=_amiri(size), anchor="mm", direction="rtl", language="ar")
+    kbb = d.textbbox((cx, cy), kicker, font=_amiri(ksize), anchor="mm", direction="rtl", language="ar")
+    word_h, kick_h = wbb[3] - wbb[1], kbb[3] - kbb[1]
+    gap = int(size * 0.16)
+    total = kick_h + gap + word_h
+    top = cy - total // 2
+    kick_cy = top + kick_h // 2
+    word_cy = top + kick_h + gap + word_h // 2
+    # union legibility box across both lines
+    x0 = min(wbb[0], kbb[0]) - int(0.026 * W)
+    x1 = max(wbb[2], kbb[2]) + int(0.026 * W)
+    box = (x0, top - int(0.012 * H), x1, top + total + int(0.012 * H))
     if not _legible(canvas, box, lay):
         canvas = _scrim(canvas, box, W).convert("RGBA")
         d = ImageDraw.Draw(canvas)
-    d.text((cx, cy), title, font=_amiri(size), fill=color, anchor="mm", direction="rtl", language="ar")
+    d.text((cx, kick_cy), kicker, font=_amiri(ksize), fill=kicker_color or color,
+           anchor="mm", direction="rtl", language="ar")
+    d.text((cx, word_cy), title, font=_amiri(size), fill=color,
+           anchor="mm", direction="rtl", language="ar")
     return canvas, size
 
 

@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+
+# Generated covers (outputs) — keep the folder, ignore the contents
+covers/*
+!covers/.gitkeep
+
+# Debug / contact sheets (any file beginning with underscore)
+_*.png
+**/_*.png
+
+# OS
+.DS_Store
+Thumbs.db

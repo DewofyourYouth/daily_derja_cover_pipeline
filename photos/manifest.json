@@ -1,0 +1,16 @@
+{
+  "_comment": "Reference photos of Jacob for prompt mode (--figure-photo) and photo mode (--photo). Selection is manual for now — pick the file whose framing/mood fits the cover. Tags support future auto-selection. NOTE: these are real photos used as-is; the BLACK-kippah rule applies only to AI generation, not to cropping a real photo.",
+  "photos": [
+    {"file": "photo_01.jpg", "orientation": "portrait", "glasses": "none", "setting": "indoor, neutral wall", "expression": "neutral", "best_for": ["clean front-facing", "headshot"], "tags": ["portrait", "frontal"]},
+    {"file": "photo_02.jpg", "orientation": "portrait", "glasses": "sunglasses (dark)", "setting": "indoor, light wall", "expression": "neutral", "best_for": ["sunglasses look"], "tags": ["sunglasses"]},
+    {"file": "photo_03.jpg", "orientation": "landscape", "glasses": "sunglasses (tortoise)", "setting": "indoor, wood door", "expression": "relaxed", "best_for": ["wide crop", "sunglasses"], "tags": ["sunglasses", "landscape"]},
+    {"file": "photo_04.jpg", "orientation": "portrait", "glasses": "sunglasses", "setting": "indoor, plain wall", "expression": "neutral", "best_for": ["smart-casual", "sunglasses"], "tags": ["sunglasses"]},
+    {"file": "photo_05.jpg", "orientation": "portrait", "glasses": "none", "setting": "study, bookshelf + poster", "expression": "slight smile", "best_for": ["study/desk scenes", "scholarly mood", "room context"], "tags": ["study", "indoor", "context"]},
+    {"file": "photo_06.jpg", "orientation": "portrait", "glasses": "none", "setting": "studio, neutral background", "expression": "neutral", "best_for": ["primary portrait", "professional headshot"], "tags": ["studio", "blazer", "primary"]},
+    {"file": "photo_07.jpg", "orientation": "portrait", "glasses": "none", "setting": "studio, navy background", "expression": "neutral", "best_for": ["primary portrait", "professional headshot"], "tags": ["studio", "blazer", "primary"]},
+    {"file": "photo_08.jpg", "orientation": "portrait", "glasses": "none", "setting": "outdoor, greenery + sky", "expression": "slight smile", "best_for": ["daytime outdoor", "casual"], "tags": ["outdoor", "daytime"]},
+    {"file": "photo_09.jpg", "orientation": "square", "glasses": "sunglasses (gradient)", "setting": "outdoor, golden hour field", "expression": "relaxed", "best_for": ["sunny/outdoor scenes", "dramatic light"], "tags": ["outdoor", "golden-hour", "sunglasses"]},
+    {"file": "photo_10.jpg", "orientation": "landscape", "glasses": "sunglasses", "setting": "outdoor, scenic hilltop", "expression": "smiling", "best_for": ["wide landscape crop", "travel/outdoor mood"], "tags": ["outdoor", "landscape", "scenic"]},
+    {"file": "photo_11.jpg", "orientation": "landscape", "glasses": "none", "setting": "indoor, neutral wall", "expression": "neutral", "best_for": ["wide front-facing crop"], "tags": ["frontal", "landscape"]}
+  ]
+}

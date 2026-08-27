@@ -10,9 +10,12 @@ on-brand and ready for the template layer:
     drawn from the post; quiet and concrete, never literal about heavy themes
     (e.g. show the cost of war, never the violence)
   * NO human figure by default (the brand default is objects, no people). A
-    figure is added only when you opt in — and then it is Jacob, with the
+    figure is added only when you opt in, and by default it is Jacob, with the
     standing likeness rules (BLACK kippah always; slim build to his current,
-    thinner appearance; conversational, contemplative, never posed-for-camera)
+    thinner appearance; conversational, contemplative, never posed-for-camera).
+    Pass figure_is_jacob=False (cover.py: --no-figure-is-jacob) when the figure
+    / reference photo is someone else — the Jacob-specific appearance rules are
+    dropped and only the generic behaviour + identity-match rules apply
   * NO text / lettering and NO decorative border in the generated art — the
     Arabic title, footer, logo and tile border are composited afterward by the
     template layer, so the model must leave the edges and an upper area clean
@@ -26,23 +29,33 @@ from __future__ import annotations
 from typing import Optional
 from .registers import Register
 
-# Standing figure rule for Jacob (only used when a figure is requested).
-FIGURE_RULE = (
+# Standing likeness rule for Jacob specifically — only used when a figure is requested
+# AND figure_is_jacob (the default). For anyone else, GENERIC_FIGURE_RULE applies instead:
+# baking Jacob's appearance in unconditionally would fight a reference photo of another person.
+JACOB_FIGURE_RULE = (
     "If a person appears, it is the same man throughout: a Modern Orthodox Jewish man, "
     "late 30s to early 40s, trimmed dark beard with a little grey, light Mediterranean skin, "
     "ALWAYS wearing a BLACK kippah (never coloured — not burgundy, navy, tan or brown), "
     "a slim build, engaged in what he is doing (reading, writing, listening, walking) and "
     "never posed for the camera"
 )
-FIGURE_NEG = "no coloured kippah, no burgundy/navy/tan/brown kippah, no velvet kippah, no heavy or overweight build"
+JACOB_FIGURE_NEG = "no coloured kippah, no burgundy/navy/tan/brown kippah, no velvet kippah, no heavy or overweight build"
 
-# Identity-match rule for a supplied reference photo. Applies whenever a reference photo
-# is passed, regardless of which model renders it — see brand.imagegen's `identity` option
-# for choosing the strongest-identity-fidelity model to go with this instruction.
+# Figure-behaviour rule for anyone who ISN'T Jacob — no baked-in appearance (that comes
+# from the reference photo itself via REFERENCE_LIKENESS_RULE below), just brand framing.
+GENERIC_FIGURE_RULE = (
+    "If a person appears, render them naturally engaged in what they are doing (reading, "
+    "writing, listening, walking) and never posed for the camera"
+)
+
+# Identity-match rule for a supplied reference photo, of Jacob or anyone else. Applies
+# whenever a reference photo is passed, regardless of which model renders it — see
+# brand.imagegen's `identity` option for choosing the strongest-identity-fidelity model
+# to go with this instruction.
 REFERENCE_LIKENESS_RULE = (
     "The supplied reference photograph is the authoritative identity reference. Preserve the "
-    "same facial geometry, eye shape and spacing, nose, smile, beard pattern, hairline, skin "
-    "tone and apparent age. Keep him recognizably the same individual even in the painted "
+    "same facial geometry, eye shape and spacing, nose, smile, beard pattern (if any), hairline, "
+    "skin tone and apparent age. Keep them recognizably the same individual even in the painted "
     "style; do not beautify, genericize, caricature or substitute a lookalike"
 )
 
@@ -64,25 +77,28 @@ REPAINT_RULE = (
 )
 
 
-def _figure_block(with_figure: bool, figure_note: str, reference_photo: bool) -> str:
+def _figure_block(with_figure: bool, figure_note: str, reference_photo: bool,
+                  figure_is_jacob: bool) -> str:
     """
     Figure instruction. Brand default is NO people (objects only) — opting in via
-    with_figure pulls in the standing likeness rules for Jacob, and reference_photo
-    additionally pins the render to the supplied photo's actual face.
+    with_figure pulls in the standing likeness rules for Jacob (or, if figure_is_jacob
+    is False, just the generic behaviour rule), and reference_photo additionally pins
+    the render to the supplied photo's actual face.
     """
     if not with_figure:
         return "No human figures in the scene."
     note = f" {figure_note.strip()}" if figure_note.strip() else ""
-    block = FIGURE_RULE + note + "."
+    base_rule = JACOB_FIGURE_RULE if figure_is_jacob else GENERIC_FIGURE_RULE
+    block = base_rule + note + "."
     if reference_photo:
         block += " " + REFERENCE_LIKENESS_RULE + "."
     return block
 
 
-def _negative_block(register: Register, with_figure: bool) -> str:
+def _negative_block(register: Register, with_figure: bool, figure_is_jacob: bool) -> str:
     negatives = register.negative
-    if with_figure:
-        negatives += ", " + FIGURE_NEG
+    if with_figure and figure_is_jacob:
+        negatives += ", " + JACOB_FIGURE_NEG
     return "Avoid: " + negatives + "."
 
 
@@ -108,17 +124,21 @@ def build_repaint_prompt(register: Register, extra: str = "") -> str:
 
 def build_prompt(register: Register, scene: str, with_figure: bool = False,
                  figure_note: str = "", extra: str = "",
-                 reference_photo: bool = False) -> str:
+                 reference_photo: bool = False, figure_is_jacob: bool = True) -> str:
     """
     Compose the full Daily Derja brand prompt.
 
     scene       : the concrete, post-specific scene — ideally one or two objects
                   (e.g. "a packed suitcase by a door, dust on the lid").
-    with_figure : include Jacob in the scene (default False — objects only).
-    figure_note : optional extra figure direction (pose, what he's doing).
+    with_figure : include a person in the scene (default False — objects only).
+    figure_note : optional extra figure direction (pose, what they're doing).
     extra       : optional freeform additions appended near the end.
-    reference_photo : a reference photo of Jacob was supplied — adds the identity
+    reference_photo : a reference photo of the figure was supplied — adds the identity
                        likeness rule (only meaningful together with with_figure).
+    figure_is_jacob : the figure is Jacob (default True — the brand default figure). Set
+                       False when with_figure/reference_photo refers to someone else, so
+                       Jacob's specific appearance rules (black kippah, build, etc.) don't
+                       fight the actual reference photo.
     """
     scene = (scene or "").strip().rstrip(".")
 
@@ -133,11 +153,11 @@ def build_prompt(register: Register, scene: str, with_figure: bool = False,
     accents = f"Living accents: {register.botanical}."
     atmosphere = f"Atmosphere: {register.atmosphere}."
     palette = f"Colour palette: {register.prompt_palette()}."
-    figure = _figure_block(with_figure, figure_note, reference_photo)
+    figure = _figure_block(with_figure, figure_note, reference_photo, figure_is_jacob)
     framing = register.framing_note + "."
     no_text = NO_TEXT_RULE
     extra_block = extra.strip().rstrip(".") + "." if extra.strip() else ""
-    negative = _negative_block(register, with_figure)
+    negative = _negative_block(register, with_figure, figure_is_jacob)
 
     sections = [medium, subject, composition_rule, setting, accents, atmosphere, palette,
                 figure, framing, no_text, extra_block, negative]

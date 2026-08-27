@@ -168,9 +168,10 @@ def run_prompt(args):
         if args.figure_photo:
             refs = [_ref_for_model(args.figure_photo)]
             with_figure = True
-        # Reference portraits get a quality-first multi-model OpenRouter comparison,
-        # unless --identity-preserving asks for the single strongest-identity model instead.
-        identity = args.identity_preserving
+        # A reference photo's whole point is a recognizable match, so --figure-photo
+        # defaults to the single strongest-identity model; pass --no-identity-preserving
+        # for the multi-model quality-comparison slate instead.
+        identity = args.identity_preserving if args.identity_preserving is not None else bool(args.figure_photo)
         provider = args.provider or ("openrouter" if (args.figure_photo or identity) else "gemini")
         variants = args.variants if args.variants is not None else (
             1 if identity else (3 if args.figure_photo else 1)
@@ -178,7 +179,7 @@ def run_prompt(args):
         scene = args.prompt or args.scene
         full = build_prompt(reg, scene, with_figure=with_figure,
                             figure_note=args.figure_note, extra=args.extra,
-                            reference_photo=bool(refs))
+                            reference_photo=bool(refs), figure_is_jacob=args.figure_is_jacob)
         if args.print_prompt:
             print(full)
         aspect = _aspect_of(spec)
@@ -314,11 +315,17 @@ def main():
     p.add_argument("--variants", type=int, default=None,
                    help="number of options (default: 3 with --figure-photo, 1 with --identity-preserving, otherwise 1)")
     p.add_argument("--models", help="comma-separated OpenRouter model IDs (quality slate by default)")
-    p.add_argument("--identity-preserving", action="store_true",
-                   help="with --figure-photo: use only OPENROUTER_IDENTITY_MODEL (default Nano Banana Pro, "
-                        "strongest face fidelity) instead of the quality-comparison slate")
-    p.add_argument("--with-figure", action="store_true", help="include Jacob in the scene (figure rules apply)")
-    p.add_argument("--figure-photo", help="reference photo of Jacob (implies --with-figure; defaults to OpenRouter)")
+    p.add_argument("--identity-preserving", action=argparse.BooleanOptionalAction, default=None,
+                   help="use only OPENROUTER_IDENTITY_MODEL (default Nano Banana Pro, strongest face "
+                        "fidelity) instead of the quality-comparison slate. On by default with "
+                        "--figure-photo (that's the point of supplying one) — pass "
+                        "--no-identity-preserving to get the multi-model comparison instead")
+    p.add_argument("--with-figure", action="store_true", help="include a person in the scene (figure rules apply)")
+    p.add_argument("--figure-photo", help="reference photo of the figure (implies --with-figure; defaults to OpenRouter)")
+    p.add_argument("--figure-is-jacob", action=argparse.BooleanOptionalAction, default=True,
+                   help="the figure/reference photo is Jacob (default): applies his standing "
+                        "appearance rules (black kippah, build, etc). Pass --no-figure-is-jacob "
+                        "when --figure-photo is someone else, so those rules don't fight the photo")
     p.add_argument("--figure-note", default="", help="extra figure direction")
     p.add_argument("--extra", default="", help="freeform additions to the prompt")
     p.add_argument("--print-prompt", action="store_true")

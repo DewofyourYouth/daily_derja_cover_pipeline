@@ -8,8 +8,9 @@ from .frame import cover_fit, draw_title_at, ensure_font, DEFAULT_LOGO
 from .templates import (compose_on_template, title_only_on_template,
                         list_templates, get_template, REGISTRY, TEMPLATES_DIR)
 from .photo_fit import load_photo, fit_to_window, detect_face_box, focus_point
-from .prompts import build_prompt
-from .imagegen import generate_scene
+from .prompts import build_prompt, build_repaint_prompt
+from .imagegen import (generate_scene, generate_scene_options, repaint_photo,
+                       repaint_photo_options)
 from .cutout import prepare_mnemonic, cutout_figure, trim_border
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     "compose_on_template", "title_only_on_template", "list_templates", "get_template",
     "REGISTRY", "TEMPLATES_DIR",
     "load_photo", "fit_to_window", "detect_face_box", "focus_point",
-    "build_prompt", "generate_scene",
+    "build_prompt", "build_repaint_prompt", "generate_scene", "generate_scene_options",
+    "repaint_photo", "repaint_photo_options",
     "prepare_mnemonic", "cutout_figure", "trim_border",
 ]

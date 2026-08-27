@@ -7,11 +7,11 @@ regenerated — only the image and the title change.
 
 Two ways to fill the window:
 
-| Mode | You give | What happens |
-|------|----------|--------------|
-| **photo** | a photo (`--photo`) | smart-cropped (face-aware) into the window, then framed. No API key. |
-| **prompt** | a scene (`--prompt`) | art is AI-generated in the chosen Daily Derja register, then framed. Optional reference photo of you. |
-| **title** | an existing cover (`--base`) | re-stamps just the Arabic title. No API key. |
+| Mode       | You give                     | What happens                                                                                                                                                  |
+| ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **photo**  | a photo (`--photo`)          | smart-cropped (face-aware) into the window, then framed. No API key. Add `--gouache` to AI-repaint it into the Daily Derja gouache look (needs an image key). |
+| **prompt** | a scene (`--prompt`)         | art is AI-generated in the chosen Daily Derja register, then framed. Optional reference photo of you.                                                         |
+| **title**  | an existing cover (`--base`) | re-stamps just the Arabic title. No API key.                                                                                                                  |
 
 ## The template library
 
@@ -19,16 +19,16 @@ Six frames, two families — consistent branding (cream ground, ornate border on
 edges, the logo + `dailyderja.com` in the bottom cartouche). The **register follows
 the dialect of the post, not the geography of its events.**
 
-| Template | Family | Design |
-|----------|--------|--------|
-| `levantine_gold_A` | Levantine (Shami) | restrained illuminated border, gold + pomegranate |
-| `levantine_gold_B` | Levantine (Shami) | lush gilded pomegranate corners |
-| `levantine_ablaq_jasmine` | Levantine (Shami) | Ablaq stone, jasmine, teal medallions |
-| `levantine_damascus_tile` | Levantine (Shami) | geometric wood-inlay, mashrabiya, Liwan arch |
-| `maghrebi_zellige` | Tunisian (Maghrebi) | Sidi Bou Saïd cobalt stars, whitewash, saffron |
-| `maghrebi_bougainvillea` | Tunisian (Maghrebi) | cascading bougainvillea, cobalt zellige |
-| `levantine_word_square` | Levantine — Word series | 1:1 image well + word & `نسمة كلمة` cartouches (gold) |
-| `maghrebi_word_sbs` | Tunisian — Word series | Sidi Bou Saïd: top-oval `نسمة كلمة`, square well, word box, logo medallion |
+| Template                  | Family                  | Design                                                                     |
+| ------------------------- | ----------------------- | -------------------------------------------------------------------------- |
+| `levantine_gold_A`        | Levantine (Shami)       | restrained illuminated border, gold + pomegranate                          |
+| `levantine_gold_B`        | Levantine (Shami)       | lush gilded pomegranate corners                                            |
+| `levantine_ablaq_jasmine` | Levantine (Shami)       | Ablaq stone, jasmine, teal medallions                                      |
+| `levantine_damascus_tile` | Levantine (Shami)       | geometric wood-inlay, mashrabiya, Liwan arch                               |
+| `maghrebi_zellige`        | Tunisian (Maghrebi)     | Sidi Bou Saïd cobalt stars, whitewash, saffron                             |
+| `maghrebi_bougainvillea`  | Tunisian (Maghrebi)     | cascading bougainvillea, cobalt zellige                                    |
+| `levantine_word_square`   | Levantine — Word series | 1:1 image well + word & `نسمة كلمة` cartouches (gold)                      |
+| `maghrebi_word_sbs`       | Tunisian — Word series  | Sidi Bou Saïd: top-oval `نسمة كلمة`, square well, word box, logo medallion |
 
 `python cover.py templates` lists them.
 
@@ -54,13 +54,24 @@ python cover.py templates
 python cover.py photo --photo photos/photo_10.jpg --title "نَسمة بحر" \
     --template levantine_gold_A --out sea.png
 
+# PHOTO + --gouache — AI-repaint the photo into the Daily Derja gouache look
+# (Gemini repaints the cropped photo in the template's register; needs an image key).
+python cover.py photo --photo photos/photo_10.jpg --title "نَسمة بحر" --gouache \
+    --template levantine_gold_A --out sea.png
+
 # PROMPT — generate art in the register, then frame it (Gemini / Nano Banana, true 16:9)
 python cover.py prompt --prompt "a glass of mint tea cooling on a windowsill, jasmine outside" \
     --title "شويّة هدوء" --template levantine_gold_B --out calm.png
 
-# PROMPT with you in the scene (you pick the reference photo)
+# PROMPT with you in the scene. This defaults to three OpenRouter options using
+# Nano Banana Pro, GPT Image 2, and FLUX.2 Pro, with the reference treated as identity-authoritative.
 python cover.py prompt --prompt "a man at a desk before dawn, one lamp lit" \
     --figure-photo photos/photo_05.jpg --title "قبل الفجر" --template levantine_damascus_tile --out predawn.png
+
+# Choose the count or models explicitly (one output per model/candidate).
+python cover.py prompt --prompt "a man reading beside an open window" \
+    --figure-photo photos/photo_05.jpg --title "قراية" --variants 2 \
+    --models google/gemini-3-pro-image,openai/gpt-image-2 --out reading.png
 
 # PROMPT offline — frame a pre-generated image instead of calling the API
 python cover.py prompt --art examples/base_levantine_minttea.jpg --title "شويّة هدوء" \
@@ -101,12 +112,22 @@ overlaid in the title area).
 Output is written to `covers/`. `--register levantine|maghrebi` overrides the generation
 register in prompt mode (defaults to the template's register). `--title-color "r,g,b"`
 overrides the title colour (default: pomegranate on Levantine, cobalt on Maghrebi).
+Every cover-generation run also prints its total API cost. OpenRouter totals use the exact billed
+`usage.cost` returned by the API; offline runs report `$0.00 USD`. Direct Gemini and
+OpenAI runs say that the cost is unavailable because those image responses do not expose
+an exact per-request USD charge.
 
 ## The photos folder
 
 `photos/` holds reference photos of Jacob for when you want to be in the cover. In
 **photo mode** the photo is the window content; in **prompt mode** pass one with
-`--figure-photo` and it guides the generated figure. You pick which photo for now —
+`--figure-photo` and it guides the generated figure. Reference-image jobs default to
+OpenRouter and produce three separately named options (use `--variants 1` for one).
+The default quality slate is configurable with `OPENROUTER_REFERENCE_MODELS`; `--models`
+overrides it for one run. Both `OPENROUTER_API_KEY` and `OPEN_ROUTER_API_KEY` are accepted
+from the project `.env`. Options run concurrently and print start/finish timing for each
+model; `OPENROUTER_TIMEOUT_SECONDS` and `OPENROUTER_MAX_WORKERS` tune waiting/concurrency.
+You pick which photo for now —
 `photos/manifest.json` tags each one (frontal / sunglasses / study / outdoor …) to make
 that easy and to support automatic selection later.
 
@@ -131,7 +152,9 @@ baked logo + URL), the library stays consistent.
   kicker, no multi-line plate.**
 - RTL Arabic in PIL: raw Unicode with `layout_engine=RAQM`, `direction='rtl'`,
   `language='ar'`. **Never** pre-process with python-bidi / arabic-reshaper.
-- Title font Amiri (tashkeel preserved); footer warm sepia-brown.
+- Title font follows the template's `title.font` so the type matches the frame: Amiri
+  (Naskh) on Levantine, Reem Kufi (geometric) on Maghrebi, Lalezar (display) on word
+  frames; tashkeel preserved. Footer stays Amiri (a constant brand mark).
 - Prompt-mode art never renders text or its own border (the template owns those); when a
   figure is requested it's Jacob, always with a **black kippah**, slim build, engaged in
   the scene — never posed.
@@ -144,14 +167,14 @@ daily_derja_cover.py        # no-API helper: overlay-title, recolor-logo
 brand/
   registers.py              # Levantine + Maghrebi palettes, layout, prompt fragments
   templates.py              # template registry + compose_on_template (RGBA-aware)
-  frame.py                  # logo, tile motifs, Amiri/raqm title + footer + kicker
+  frame.py                  # logo, tile motifs, per-template raqm title + footer + kicker (FONTS registry)
   photo_fit.py              # face-aware crop to the window
   prompts.py                # register-aware Daily Derja prompt builder
-  imagegen.py               # Gemini (default) + OpenAI backends
+  imagegen.py               # OpenRouter multi-model + direct Gemini/OpenAI backends
   cutout.py                 # mnemonic figure cutout: trim border + background→transparent
 templates/                  # the frames: <name>.jpg (baked) + <name>_blank.jpg + templates.json
 assets/logo/                # the Daily Derja logo (transparent line-art)
-fonts/Amiri-Regular.ttf     # bundled (auto-downloads if missing)
+fonts/                      # title typefaces (Amiri / ReemKufi / Lalezar) — auto-download on first use
 photos/                     # your reference photos + manifest.json
 examples/                   # sample generated scenes (for --art demos)
 tools/                      # bake_template_footer.py, measure_window.py

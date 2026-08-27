@@ -30,12 +30,19 @@ fragments used by `brand/prompts.py`.
 
 ## Title overlay (the one piece of per-cover text)
 
-`brand/frame.draw_title_at` — Amiri via `layout_engine=RAQM`, `direction='rtl'`,
-`language='ar'`, raw Unicode (NEVER python-bidi / arabic-reshaper — that double-shapes
-and mangles vowels). Width is measured on the consonant skeleton (tashkeel stripped) so
-vowel-marked titles aren't penalised. A feathered cream scrim is laid behind the title
-only when the pixels under it would hurt legibility (`_legible`), never a hard plate.
-Title colour comes from the template's `title.color`; sepia is the fallback constant.
+`brand/frame.draw_title_at` — RAQM `layout_engine`, `direction='rtl'`, `language='ar'`,
+raw Unicode (NEVER python-bidi / arabic-reshaper — that double-shapes and mangles vowels).
+Width is measured on the consonant skeleton (tashkeel stripped) so vowel-marked titles
+aren't penalised. A feathered cream scrim is laid behind the title only when the pixels
+under it would hurt legibility (`_legible`), never a hard plate.
+
+**Typography matches the template.** The title typeface comes from the template's
+`title.font` (a name in `brand/frame.FONTS`), so the type automatically suits the frame:
+`Amiri` (classical Naskh) for the Levantine illuminated frames, `ReemKufi` (geometric Kufi,
+echoes the khatam zellige) for Maghrebi, `Lalezar` (bold display) for the word frames.
+Fonts are fetched from Google Fonts (OFL) on first use, like Amiri always was; omit
+`title.font` and it falls back to Amiri. Title colour comes from `title.color` (sepia
+fallback). The footer stays Amiri always — it's a constant brand mark, not per-template type.
 
 ## Word series (نسمة كلمة) + cutout
 
@@ -64,10 +71,26 @@ aligned by `compose_on_template`; opaque content cover-fits. `--no-cutout` keeps
   `<name>_blank.png` so the footer can be re-baked (e.g. recoloured).
 - Register the entry in `templates.json` (window + title).
 
+## Gouache filter (photo mode)
+
+`cover.py photo --gouache` AI-repaints a supplied photo into the Daily Derja gouache look
+instead of placing it straight. The photo is face-cropped to the window first, then
+`brand/imagegen.repaint_photo_options` passes that crop to the image backend (OpenRouter
+multi-model by default) with
+`brand/prompts.build_repaint_prompt` — which reuses the register's `medium`/`atmosphere`/
+`palette` but **omits** the architecture/botanical fragments, so the model restyles the
+existing picture (composition + faces preserved) rather than inventing a new scene. The
+result is resized back to the exact window. Reference jobs default to three options from
+Nano Banana Pro, GPT Image 2, and FLUX.2 Pro; `--variants` and `--models` control the slate.
+Needs an image key; `--register`/`--provider`/`--extra` mirror prompt mode,
+`--save-intermediates` dumps the raw repaint.
+
 ## Image backends (prompt mode only)
 
-`brand/imagegen.generate_scene` → **Gemini / Nano Banana by default** (true 16:9 at 2K;
-set `GEMINI_IMAGE_MODEL` to the current 3.x model). OpenAI / GPT Image 2 is optional
+`brand/imagegen.generate_scene_options` → **OpenRouter for reference photos**, with
+identity-authoritative prompting and three quality-model candidates. Plain prompt jobs still
+use Gemini / Nano Banana by default (true 16:9 at 2K; set `GEMINI_IMAGE_MODEL` to the current
+3.x model). Direct OpenAI / GPT Image 2 is optional
 (`--provider openai`) and emits 3:2, not true 16:9 — fine for square work, cropped for
 16:9. Photo / title / `--art` paths need no key. The generated art deliberately contains
 **no text and no border** (the template owns those) and leaves the upper area calm for

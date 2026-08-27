@@ -31,26 +31,40 @@ from .registers import (Register, Layout, LAYOUT, TITLE_COLOR, FOOTER_COLOR, FOO
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FONT_DIR = os.path.join(HERE, "fonts")
-AMIRI = os.path.join(FONT_DIR, "Amiri-Regular.ttf")
-AMIRI_URL = "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Regular.ttf"
 DEFAULT_LOGO = os.path.join(HERE, "assets", "logo", "daily_derja_logo.png")
 CREAM = (249, 245, 236)
+
+# Title typefaces, keyed by the name a template declares in its title.font spec.
+# Each entry is (local filename, Google-Fonts OFL download URL) — fetched on first
+# use, exactly like Amiri was. DEFAULT_FONT (Amiri) is used when a template omits
+# title.font, so existing frames render unchanged.
+FONTS = {
+    "Amiri":    ("Amiri-Regular.ttf",  "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Regular.ttf"),
+    "ReemKufi": ("ReemKufi.ttf",        "https://github.com/google/fonts/raw/main/ofl/reemkufi/ReemKufi%5Bwght%5D.ttf"),
+    "Lalezar":  ("Lalezar-Regular.ttf", "https://github.com/google/fonts/raw/main/ofl/lalezar/Lalezar-Regular.ttf"),
+}
+DEFAULT_FONT = "Amiri"
 
 # Arabic diacritics / marks + tatweel ONLY (must NOT include the letter block 0620–064A).
 _TASHKEEL = re.compile("[ؐ-ؚـً-ٰٟۖ-ۜ۟-۪ۨ-ۭ]")
 
 
 # --------------------------------------------------------------------- fonts
-def ensure_font():
-    if not os.path.exists(AMIRI):
+def ensure_font(name: str = DEFAULT_FONT) -> str:
+    """Ensure the named title font is on disk (download on first use) and return
+    its path. Unknown names fall back to Amiri so a bad title.font never crashes."""
+    fname, url = FONTS.get(name) or FONTS[DEFAULT_FONT]
+    path = os.path.join(FONT_DIR, fname)
+    if not os.path.exists(path):
         os.makedirs(FONT_DIR, exist_ok=True)
-        urllib.request.urlretrieve(AMIRI_URL, AMIRI)
+        urllib.request.urlretrieve(url, path)
     assert features.check_feature("raqm"), (
         "PIL raqm/HarfBuzz unavailable — reinstall Pillow from the official wheels")
+    return path
 
 
-def _amiri(size: int) -> ImageFont.FreeTypeFont:
-    return ImageFont.truetype(AMIRI, size, layout_engine=ImageFont.Layout.RAQM)
+def _font(size: int, name: str = DEFAULT_FONT) -> ImageFont.FreeTypeFont:
+    return ImageFont.truetype(ensure_font(name), size, layout_engine=ImageFont.Layout.RAQM)
 
 
 # --------------------------------------------------------------------- tiles
@@ -158,12 +172,13 @@ def _scrim(im: Image.Image, box, W: int) -> Image.Image:
 
 
 # --------------------------------------------------------------------- title + footer
-def _fit_title_size(text_bare: str, max_w: int, max_h: int, lo: int = 48, hi: int = 640) -> int:
+def _fit_title_size(text_bare: str, max_w: int, max_h: int, lo: int = 48, hi: int = 640,
+                    font: str = DEFAULT_FONT) -> int:
     tmp = ImageDraw.Draw(Image.new("RGB", (8, 8)))
     best = lo
     while lo <= hi:
         mid = (lo + hi) // 2
-        b = tmp.textbbox((0, 0), text_bare, font=_amiri(mid), direction="rtl", language="ar")
+        b = tmp.textbbox((0, 0), text_bare, font=_font(mid, font), direction="rtl", language="ar")
         if (b[2] - b[0]) <= max_w and (b[3] - b[1]) <= max_h:
             best = mid; lo = mid + 1
         else:
@@ -172,11 +187,12 @@ def _fit_title_size(text_bare: str, max_w: int, max_h: int, lo: int = 48, hi: in
 
 
 def draw_title(canvas: Image.Image, reg: Register, title: str, lay: Layout = LAYOUT,
-               color: Optional[Tuple[int, int, int]] = None) -> Tuple[Image.Image, int]:
+               color: Optional[Tuple[int, int, int]] = None,
+               font: str = DEFAULT_FONT) -> Tuple[Image.Image, int]:
     """Overlay the Arabic title in the upper area; returns (canvas, size)."""
     if not title:
         return canvas, 0
-    ensure_font()
+    ensure_font(font)
     W, H = canvas.size
     cx, cy = W // 2, int(lay.title_cy_f * H)
     max_w = int(W * lay.title_max_w_f)
@@ -185,15 +201,15 @@ def draw_title(canvas: Image.Image, reg: Register, title: str, lay: Layout = LAY
     bare = _TASHKEEL.sub("", title) or title
     # Fixed target size for series consistency; shrink ONLY if the title would
     # overflow the width or the safe vertical band (nesma behaviour).
-    size = min(int(lay.title_size_f * H), _fit_title_size(bare, max_w, max_h))
+    size = min(int(lay.title_size_f * H), _fit_title_size(bare, max_w, max_h, font=font))
     d = ImageDraw.Draw(canvas)
-    bb = d.textbbox((cx, cy), title, font=_amiri(size), anchor="mm", direction="rtl", language="ar")
+    bb = d.textbbox((cx, cy), title, font=_font(size, font), anchor="mm", direction="rtl", language="ar")
     padx, pady = int(0.028 * W), int(0.022 * H)
     box = (bb[0] - padx, bb[1] - pady, bb[2] + padx, bb[3] + pady)
     if not _legible(canvas, box, lay):
         canvas = _scrim(canvas, box, W).convert("RGBA")
         d = ImageDraw.Draw(canvas)
-    d.text((cx, cy), title, font=_amiri(size), fill=color or TITLE_COLOR,
+    d.text((cx, cy), title, font=_font(size, font), fill=color or TITLE_COLOR,
            anchor="mm", direction="rtl", language="ar")
     return canvas, size
 
@@ -201,42 +217,43 @@ def draw_title(canvas: Image.Image, reg: Register, title: str, lay: Layout = LAY
 def draw_title_at(canvas: Image.Image, title: str, cx: int, cy: int, max_w: int, max_h: int,
                   color: Tuple[int, int, int] = TITLE_COLOR, target_size: Optional[int] = None,
                   kicker: Optional[str] = None, kicker_color: Optional[Tuple[int, int, int]] = None,
-                  lay: Layout = LAYOUT) -> Tuple[Image.Image, int]:
+                  lay: Layout = LAYOUT, font: str = DEFAULT_FONT) -> Tuple[Image.Image, int]:
     """Overlay an Arabic title centred at (cx, cy), fit within (max_w, max_h); cream
-    scrim safety net if the area isn't legible.
+    scrim safety net if the area isn't legible. `font` is the title typeface name
+    (see FONTS) the template declares, so the type matches the frame.
 
     If `kicker` is given (e.g. a series name like 'نسمة كلمة'), it is rendered small
     ABOVE the main word — the Daily Derja "word series" layout (series kicker + word)."""
     if not title:
         return canvas, 0
-    ensure_font()
+    ensure_font(font)
     W, H = canvas.size
     bare = _TASHKEEL.sub("", title) or title
 
     if not kicker:
-        fit = _fit_title_size(bare, max_w, max_h)
+        fit = _fit_title_size(bare, max_w, max_h, font=font)
         size = min(target_size, fit) if target_size else fit
         d = ImageDraw.Draw(canvas)
-        bb = d.textbbox((cx, cy), title, font=_amiri(size), anchor="mm", direction="rtl", language="ar")
+        bb = d.textbbox((cx, cy), title, font=_font(size, font), anchor="mm", direction="rtl", language="ar")
         padx, pady = int(0.026 * W), int(0.020 * H)
         box = (bb[0] - padx, bb[1] - pady, bb[2] + padx, bb[3] + pady)
         if not _legible(canvas, box, lay):
             canvas = _scrim(canvas, box, W).convert("RGBA")
             d = ImageDraw.Draw(canvas)
-        d.text((cx, cy), title, font=_amiri(size), fill=color, anchor="mm", direction="rtl", language="ar")
+        d.text((cx, cy), title, font=_font(size, font), fill=color, anchor="mm", direction="rtl", language="ar")
         return canvas, size
 
     # --- word-series layout: small kicker line + large word, stacked & centred on cy ---
-    word_fit = _fit_title_size(bare, max_w, int(max_h * 0.62))
+    word_fit = _fit_title_size(bare, max_w, int(max_h * 0.62), font=font)
     size = min(target_size, word_fit) if target_size else word_fit
     kbare = _TASHKEEL.sub("", kicker) or kicker
     ksize = max(26, int(size * 0.46))
     while ksize > 22:
-        kb = _fit_title_size(kbare, int(max_w * 0.9), int(size * 0.6))
+        kb = _fit_title_size(kbare, int(max_w * 0.9), int(size * 0.6), font=font)
         ksize = min(ksize, kb); break
     d = ImageDraw.Draw(canvas)
-    wbb = d.textbbox((cx, cy), title, font=_amiri(size), anchor="mm", direction="rtl", language="ar")
-    kbb = d.textbbox((cx, cy), kicker, font=_amiri(ksize), anchor="mm", direction="rtl", language="ar")
+    wbb = d.textbbox((cx, cy), title, font=_font(size, font), anchor="mm", direction="rtl", language="ar")
+    kbb = d.textbbox((cx, cy), kicker, font=_font(ksize, font), anchor="mm", direction="rtl", language="ar")
     word_h, kick_h = wbb[3] - wbb[1], kbb[3] - kbb[1]
     gap = int(size * 0.16)
     total = kick_h + gap + word_h
@@ -250,9 +267,9 @@ def draw_title_at(canvas: Image.Image, title: str, cx: int, cy: int, max_w: int,
     if not _legible(canvas, box, lay):
         canvas = _scrim(canvas, box, W).convert("RGBA")
         d = ImageDraw.Draw(canvas)
-    d.text((cx, kick_cy), kicker, font=_amiri(ksize), fill=kicker_color or color,
+    d.text((cx, kick_cy), kicker, font=_font(ksize, font), fill=kicker_color or color,
            anchor="mm", direction="rtl", language="ar")
-    d.text((cx, word_cy), title, font=_amiri(size), fill=color,
+    d.text((cx, word_cy), title, font=_font(size, font), fill=color,
            anchor="mm", direction="rtl", language="ar")
     return canvas, size
 
@@ -263,14 +280,15 @@ def draw_footer(canvas: Image.Image, reg: Register, lay: Layout = LAYOUT,
     W, H = canvas.size
     fsize = int(lay.footer_size_f * H)
     d = ImageDraw.Draw(canvas)
-    bb = d.textbbox((W // 2, int(lay.footer_baseline_f * H)), text, font=_amiri(fsize),
+    # footer stays Amiri — it is a constant brand mark, not the per-template title
+    bb = d.textbbox((W // 2, int(lay.footer_baseline_f * H)), text, font=_font(fsize),
                     anchor="ms", direction="ltr", language="en")
     padx, pady = int(0.02 * W), int(0.014 * H)
     box = (bb[0] - padx, bb[1] - pady, bb[2] + padx, bb[3] + pady)
     if not _legible(canvas, box, lay):
         canvas = _scrim(canvas, box, W).convert("RGBA")
         d = ImageDraw.Draw(canvas)
-    d.text((W // 2, int(lay.footer_baseline_f * H)), text, font=_amiri(fsize),
+    d.text((W // 2, int(lay.footer_baseline_f * H)), text, font=_font(fsize),
            fill=color or FOOTER_COLOR, anchor="ms", direction="ltr", language="en")
     return canvas
 

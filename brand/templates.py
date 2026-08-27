@@ -17,9 +17,11 @@ Registry entry:
   register   levantine | maghrebi  (informs prompt-mode generation, not the frame)
   canvas     [W, H] of the frame
   window     [left, top, right, bottom] content box (inside the gold keyline)
-  title      {top_f, max_w_f, max_h_f, size_f, color}  — fractions of the WINDOW
-             (top_f, max_w_f, max_h_f) and of canvas H (size_f); color is the
-             title RGB (Daily Derja covers use deep pomegranate, not sepia)
+  title      {top_f, max_w_f, max_h_f, size_f, color, font}  — fractions of the
+             WINDOW (top_f, max_w_f, max_h_f) and of canvas H (size_f); color is the
+             title RGB (Daily Derja covers use deep pomegranate, not sepia); font is
+             the title typeface NAME (see brand.frame.FONTS — Amiri | ReemKufi |
+             Lalezar), so the type automatically matches the frame. Omitted -> Amiri.
 """
 from __future__ import annotations
 import json, os
@@ -88,6 +90,7 @@ def compose_on_template(content: Image.Image, name: str, title: str = "",
     ts = spec["title"]
     color = title_color or tuple(ts["color"])
 
+    font = ts.get("font", "Amiri")                # the template's title typeface (matches the frame)
     word_panel = spec.get("word_panel")
     if word_panel:                                # dedicated word-series frame: series header is
         wl, wt, wr, wb = word_panel               # baked in; render the WORD large, no kicker
@@ -95,7 +98,7 @@ def compose_on_template(content: Image.Image, name: str, title: str = "",
         base, size = draw_title_at(
             base, title, (wl + wr) // 2, (wt + wb) // 2,
             int((wr - wl) * ts.get("max_w_f", 0.84)), int((wb - wt) * ts.get("max_h_f", 0.74)),
-            color=color, target_size=target)
+            color=color, target_size=target, font=font)
         return base.convert("RGB"), size
 
     cx, cy, max_w, max_h, _ = _title_geom(spec)
@@ -104,7 +107,7 @@ def compose_on_template(content: Image.Image, name: str, title: str = "",
         max_h = int(0.50 * wh)
     target = int(ts.get("size_f", 0.115) * H)
     base, size = draw_title_at(base, title, cx, cy, max_w, max_h, color=color,
-                               target_size=target, kicker=kicker, kicker_color=color)
+                               target_size=target, kicker=kicker, kicker_color=color, font=font)
     return base.convert("RGB"), size
 
 
@@ -124,4 +127,5 @@ def title_only_on_template(base_img: Image.Image, name: str, title: str,
     target = int(ts.get("size_f", 0.115) * H)
     color = title_color or tuple(ts["color"])
     return draw_title_at(base_img.convert("RGBA"), title, cx, cy, max_w, max_h,
-                         color=color, target_size=target, kicker=kicker, kicker_color=color)
+                         color=color, target_size=target, kicker=kicker, kicker_color=color,
+                         font=ts.get("font", "Amiri"))

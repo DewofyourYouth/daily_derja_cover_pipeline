@@ -3,66 +3,226 @@
     "file": "levantine_gold_A.jpg",
     "label": "Levantine Gold A — restrained illuminated border, gold + pomegranate",
     "register": "levantine",
-    "canvas": [2752, 1536],
-    "window": [443, 402, 2309, 1120],
-    "title": {"top_f": 0.15, "max_w_f": 0.86, "max_h_f": 0.26, "size_f": 0.115, "color": [140, 35, 38]}
+    "canvas": [
+      2752,
+      1536
+    ],
+    "window": [
+      443,
+      402,
+      2309,
+      1120
+    ],
+    "title": {
+      "top_f": 0.15,
+      "max_w_f": 0.86,
+      "max_h_f": 0.26,
+      "size_f": 0.115,
+      "color": [
+        140,
+        35,
+        38
+      ],
+      "font": "Amiri"
+    }
   },
   "levantine_gold_B": {
     "file": "levantine_gold_B.jpg",
     "label": "Levantine Gold B — lush gilded pomegranate border",
     "register": "levantine",
-    "canvas": [2752, 1536],
-    "window": [408, 407, 2343, 1130],
-    "title": {"top_f": 0.15, "max_w_f": 0.86, "max_h_f": 0.26, "size_f": 0.115, "color": [140, 35, 38]}
+    "canvas": [
+      2752,
+      1536
+    ],
+    "window": [
+      408,
+      407,
+      2343,
+      1130
+    ],
+    "title": {
+      "top_f": 0.15,
+      "max_w_f": 0.86,
+      "max_h_f": 0.26,
+      "size_f": 0.115,
+      "color": [
+        140,
+        35,
+        38
+      ],
+      "font": "Amiri"
+    }
   },
   "levantine_ablaq_jasmine": {
     "file": "levantine_ablaq_jasmine.jpg",
     "label": "Levantine Ablaq & Jasmine — alternating stone, jasmine, teal medallions",
     "register": "levantine",
-    "canvas": [2752, 1536],
-    "window": [341, 341, 2409, 1194],
-    "title": {"top_f": 0.14, "max_w_f": 0.86, "max_h_f": 0.24, "size_f": 0.115, "color": [140, 35, 38]}
+    "canvas": [
+      2752,
+      1536
+    ],
+    "window": [
+      341,
+      341,
+      2409,
+      1194
+    ],
+    "title": {
+      "top_f": 0.14,
+      "max_w_f": 0.86,
+      "max_h_f": 0.24,
+      "size_f": 0.115,
+      "color": [
+        140,
+        35,
+        38
+      ],
+      "font": "Amiri"
+    }
   },
   "levantine_damascus_tile": {
     "file": "levantine_damascus_tile.jpg",
     "label": "Levantine Damascus Tile — geometric wood-inlay, mashrabiya, Liwan arch",
     "register": "levantine",
-    "canvas": [2752, 1536],
-    "window": [440, 326, 2312, 1209],
-    "title": {"top_f": 0.14, "max_w_f": 0.86, "max_h_f": 0.24, "size_f": 0.115, "color": [140, 35, 38]}
+    "canvas": [
+      2752,
+      1536
+    ],
+    "window": [
+      440,
+      326,
+      2312,
+      1209
+    ],
+    "title": {
+      "top_f": 0.14,
+      "max_w_f": 0.86,
+      "max_h_f": 0.24,
+      "size_f": 0.115,
+      "color": [
+        140,
+        35,
+        38
+      ],
+      "font": "Amiri"
+    }
   },
   "maghrebi_zellige": {
     "file": "maghrebi_zellige.jpg",
     "label": "Maghrebi Sidi Bou Said Zellige — cobalt eight-point stars, whitewash, saffron",
     "register": "maghrebi",
-    "canvas": [2752, 1536],
-    "window": [406, 393, 2345, 1122],
-    "title": {"top_f": 0.15, "max_w_f": 0.86, "max_h_f": 0.26, "size_f": 0.115, "color": [38, 70, 135]}
+    "canvas": [
+      2752,
+      1536
+    ],
+    "window": [
+      406,
+      393,
+      2345,
+      1122
+    ],
+    "title": {
+      "top_f": 0.15,
+      "max_w_f": 0.86,
+      "max_h_f": 0.26,
+      "size_f": 0.115,
+      "color": [
+        38,
+        70,
+        135
+      ],
+      "font": "ReemKufi"
+    }
   },
   "maghrebi_bougainvillea": {
     "file": "maghrebi_bougainvillea.jpg",
     "label": "Maghrebi Bougainvillea — cascading magenta/coral, cobalt zellige, saffron",
     "register": "maghrebi",
-    "canvas": [2752, 1536],
-    "window": [420, 413, 2331, 1104],
-    "title": {"top_f": 0.15, "max_w_f": 0.86, "max_h_f": 0.26, "size_f": 0.115, "color": [38, 70, 135]}
+    "canvas": [
+      2752,
+      1536
+    ],
+    "window": [
+      420,
+      413,
+      2331,
+      1104
+    ],
+    "title": {
+      "top_f": 0.15,
+      "max_w_f": 0.86,
+      "max_h_f": 0.26,
+      "size_f": 0.115,
+      "color": [
+        38,
+        70,
+        135
+      ],
+      "font": "ReemKufi"
+    }
   },
   "levantine_word_square": {
     "file": "levantine_word_square.jpg",
     "label": "Levantine Word Series — 16:9 cover, 1:1 image well + word/نسمة كلمة cartouches (نسمة كلمة + URL baked)",
     "register": "levantine",
-    "canvas": [2752, 1536],
-    "window": [1354, 295, 2205, 1198],
-    "word_panel": [627, 712, 1105, 1175],
-    "title": {"size_f": 0.17, "max_w_f": 0.84, "max_h_f": 0.80, "color": [140, 35, 38]}
+    "canvas": [
+      2752,
+      1536
+    ],
+    "window": [
+      1354,
+      295,
+      2205,
+      1198
+    ],
+    "word_panel": [
+      627,
+      712,
+      1105,
+      1175
+    ],
+    "title": {
+      "size_f": 0.17,
+      "max_w_f": 0.84,
+      "max_h_f": 0.8,
+      "color": [
+        140,
+        35,
+        38
+      ],
+      "font": "Lalezar"
+    }
   },
   "maghrebi_word_sbs": {
     "file": "maghrebi_word_sbs.jpg",
     "label": "Maghrebi Word Series (Sidi Bou Saïd) — top oval نسمة كلمة, square well left, word box right, baked logo + URL",
     "register": "maghrebi",
-    "canvas": [2752, 1536],
-    "window": [490, 501, 1018, 1030],
-    "word_panel": [1690, 512, 2262, 704],
-    "title": {"size_f": 0.12, "max_w_f": 0.88, "max_h_f": 0.82, "color": [38, 70, 135]}
+    "canvas": [
+      2752,
+      1536
+    ],
+    "window": [
+      490,
+      501,
+      1018,
+      1030
+    ],
+    "word_panel": [
+      1690,
+      512,
+      2262,
+      704
+    ],
+    "title": {
+      "size_f": 0.12,
+      "max_w_f": 0.88,
+      "max_h_f": 0.82,
+      "color": [
+        38,
+        70,
+        135
+      ],
+      "font": "Lalezar"
+    }
   }
 }

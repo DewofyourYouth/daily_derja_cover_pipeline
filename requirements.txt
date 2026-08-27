@@ -11,7 +11,7 @@ numpy>=1.24              # legibility checks + image math
 
 # --- Optional: prompt mode image backends (not needed for photo / title / --art) ---
 google-genai>=1.30        # Gemini / Nano Banana (default backend, true 16:9). Needs GEMINI_API_KEY
-openai>=1.40             # GPT Image 2 (optional --provider openai). Needs OPENAI_API_KEY
+openai>=1.40             # Direct OpenAI backend (optional). OpenRouter uses the Python stdlib.
 
 # --- Optional: face-aware crop in photo mode (graceful upper-centre fallback if absent) ---
 opencv-python-headless>=4.8

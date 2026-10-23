@@ -156,13 +156,12 @@ def make_story(post_dir: str, out: Optional[str] = None) -> str:
     cover = Image.open(cover_path).convert("RGB")
     cw = W - 2 * 40
     ch = round(cover.height * cw / cover.width)
-    ch = min(ch, 760)
+    # Without a pullquote the title is the only text, so the cover gets the room.
+    ch = min(ch, 760 if fm.get("pullquote") else 1000)
     cw = round(cover.width * ch / cover.height)
     cover = cover.resize((cw, ch), Image.LANCZOS)
-    cx, cy = (W - cw) // 2, SAFE_TOP + 30
-    canvas.paste(cover, (cx, cy))
-    d.rectangle([cx - 3, cy - 3, cx + cw + 2, cy + ch + 2], outline=reg.keyline, width=2)
-    y = cy + ch + 70
+    top = SAFE_TOP + 30
+    y = top + ch + 70  # text starts here, before centring
 
     accent = reg.tile_palette[3] if reg is LEVANTINE else reg.tile_palette[0]
     series = fm.get("series") or []
@@ -174,7 +173,7 @@ def make_story(post_dir: str, out: Optional[str] = None) -> str:
     space = footer_y - 90 - y  # between the cover and the footer
     room = space  # what's left for quote + title
 
-    # Size everything first, then centre the block in the space below the cover.
+    # Size every text block first; placement waits until the total height is known.
     blocks = []  # (size, lines, color, leading, gap_after)
     if series:
         blocks.append((40, [series], accent, 1.4, 28))
@@ -189,11 +188,17 @@ def make_story(post_dir: str, out: Optional[str] = None) -> str:
                                        max_lines=2, min_size=30, leading=1.4)
             blocks.append((tsize, tlines, FOOTER_COLOR, 1.4, 0))
     elif title:
-        size, lines = _fit_block(d, title, 80, W - 2 * MARGIN, room, max_lines=3)
-        blocks.append((size, lines, TITLE_COLOR, 1.55, 0))
+        size, lines = _fit_block(d, title, 104, W - 2 * MARGIN, room, max_lines=3, leading=1.4)
+        blocks.append((size, lines, TITLE_COLOR, 1.4, 0))
 
+    # Centre cover + text together: leftover space is split above the cover and
+    # below the text, so a short title doesn't leave one big empty band.
     total = sum(int(sz * ld) * len(ls) + gap for sz, ls, _, ld, gap in blocks)
-    y += max(0, (space - total) // 2)
+    shift = max(0, (space - total) // 2)
+    cx, cy = (W - cw) // 2, top + shift
+    canvas.paste(cover, (cx, cy))
+    d.rectangle([cx - 3, cy - 3, cx + cw + 2, cy + ch + 2], outline=reg.keyline, width=2)
+    y += shift
     for sz, ls, color, ld, gap in blocks:
         y = _draw_lines(d, ls, sz, y, color, leading=ld) + gap
 

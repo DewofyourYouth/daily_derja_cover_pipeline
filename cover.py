@@ -205,6 +205,12 @@ def run_prompt(args):
                   provider=provider)
 
 
+def run_story(args):
+    from brand.story import make_story
+    out = make_story(args.post, out=args.out)
+    log(f"[story] {args.post} -> {out}")
+
+
 def run_title(args):
     base = Image.open(args.base).convert("RGB")
     title, kicker = _title_kicker(args)
@@ -336,6 +342,11 @@ def main():
     add_common(p)
     p.add_argument("--base", required=True, help="existing cover to restamp")
     p.set_defaults(func=run_title)
+
+    p = sub.add_parser("story", help="1080x1920 Instagram story card for a post bundle (writes story.jpg into it)")
+    p.add_argument("--post", required=True, help="post bundle dir, e.g. ../dailyderja/content/blog/<slug>")
+    p.add_argument("--out", help="output path (default: <post>/story.jpg)")
+    p.set_defaults(func=run_story)
 
     p = sub.add_parser("word", help="word-series cover: a word over a mnemonic graphic on a word frame")
     p.add_argument("--word", required=True, help="the featured Arabic word")
